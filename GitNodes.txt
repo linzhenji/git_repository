@@ -1,0 +1,218 @@
+Git：分布式版本控制系统，是由Linus用C语言开发的。
+集中式版本控制系统：版本库集中存放在中央服务器，而且必须联网才能工作。安全性低，当中央服务器出现问题，那么所有开发者都没法工作。
+分布式版本控制系统：不存在中央服务器，每个人的电脑都是一个完整的版本库。安全性高，当电脑出现问题，可以从其他人复制一份就可以继续工作。
+
+安装Git:
+默认安装
+最后打开git-bash
+输入：	git config --global user.name"linzhenji"
+	    git config --global user.email"1015170570@qq.com"
+
+创建仓库：
+		mkdir xxx	//创建目录
+		pwd   	  	//显示当前目录
+		git init 	//把这个目录变成git可以管理的仓库，而且是个空仓库，
+					//目录多了一个.git目录
+		ls -ah 		//可以显示隐藏的.git目录
+
+提交文件至仓库：
+		git commit -m "xxxx"	//-m后面输入的是本次提交的说明
+		//commit可以一次提交多个文件，所以可以add不同的文件
+
+		git status	//查看仓库当前的状态（文件的修改）
+		git diff	//difference,查看具体修改了什么内容
+		提交修改，和提交新文件的步骤是一样的。
+		git add git_test.txt
+		git status 	//显示将要被提交的修改包括git_test.txt
+		git commit 
+		
+版本回退
+		git log			//查看文件每次都改了什么内容
+		git log --pretty=oneline //简要输出日志
+	将git_test.txt退回上一个版本，在Git中，用HEAD表示当前版本，
+	上一版本就是HEAD^,上上版本HEAD^^,往上100版本HEAD~100.
+		git reset --hard HEAD^	//版本回退到上个版本
+	回到最新版本：命令行窗口未关闭，往上找，找到update的commit id
+		git reset --hard 2b878
+	或者当窗口关闭了，找不到最新版本的commit id
+	使用git reflog
+		git reflog //记录了每一次的命令就可以查找到最新版本的commit id
+		
+暂存区和工作区
+	工作区：就是当前电脑能看到的目录，git-repository
+	暂存区（stage或者叫index）：git add添加的文件就是放在了暂存区stage
+	分支（master）:git commit提交更改后，实际就是把暂存区的所有内容提交到当前分支
+
+管理修改：
+	git跟踪并管理的是修改，而非文件
+	eg	: 第一次修改 --> git add --> 第二次修改 --> git commit
+	这里第二次修改并没有被提交，因为git add添加到暂存区，
+	暂存区里只存储着第一次修改。git commit 把暂存区提交到分支。
+
+撤销修改：
+	git checkout -- file	//把指定的file文件在工作区的修改全部撤销
+	分两种情况：		// --不能省略，不然就是"切换到另外一个分支"的命令
+	1、file自修改后还没有被添加到暂存区，撤销回到和版本库一模一样的状态
+	2、file已经被添加到暂存区后又进行了修改，撤销回到添加到暂存区后的状态
+	总之，就是让file回到最近一次的 git add 或 git commit 时的状态
+	对于第二种情况的解决：
+		git status	//发现修改只是添加到了暂存区，此时还有被提交
+		git reset HEAD file 可以把暂存区的修改撤销(unstage),重新放回工作区
+		git status	//此时发现暂存区是干净的，Changes not staged for commit
+		git checkout -- file	//丢弃工作区的修改，撤销回到和版本库一模一样的状态
+
+删除文件：
+	rm file	//虽然Git知道删除了文件，但是工作区和版本库就不一致了
+	git status	//了解到哪些文件被删除了
+	接下来有两种做法：
+	1、	git rm file	//指定版本库需要删除的文件
+		git commit	
+	2、	删除错文件，但是由于版本库中的文件还存在，可以把误删的文件恢复到最新版本
+		git checkout -- file
+
+搭建远程仓库：
+	$ ssh-keygen -t rsa -C "1015170570@qq.com"
+	之后会在用户主目录里找到.ssh目录，里面有id_rsa和id_rsa.pub两个文件
+	id_rsa是私钥，id_rsa.pub是公钥
+	登录GitHub，打开"Account settings","SSH Keys"页面
+	填写id_rsa.pub文件的内容
+	
+关联远程库：
+	git remote add origin git@server-name:path/repo-name.git
+	eg：git remote add origin git@github.com:linzhenji/git_test.git
+	第一次将master分支的所有内容推送至远程库
+		git push -u origin master
+	此后，只需
+		git push origin master
+		
+克隆本地库
+	GitHub勾选Initialize this repository with a README,
+	这样GitHub会自动为我们创建一个README.md文件.
+	$ git clone git@github.com:linzhenji/git_learn.git	//克隆
+	Git支持多种协议，包括https,但通过ssh支持的原生git协议速度最快
+	
+创建和合并分支：
+	目前为止，Git只有一条时间线，就是master分支。
+	HEAD严格来说并不是指向提交，而是指向master,
+	master才是指向提交的，所以，HEAD指向的就是当前分支。
+	Git用master指向最新的提交，再用HEAD指向master，
+	就能确定当前分支，以及当前分支的提交点。
+	查看分支：	git branch
+	创建分支：	git branch <name>	eg: git branch dev
+	切换分支：	git checkout <name>
+	创建+合并分支：	git checkout -b <name>
+	合并某分支到当前分支：	git merge <name>
+	删除分支：	git branch -d <name>
+	在Git无法自动合并分支时，就首先解决冲突，
+	解决后，再提交，合并完成。
+	解决冲突：就是把Git合并失败的文件手动编辑为我们希望的内容，然后再提交。
+	查看分支合并图：
+		git log --graph
+		git log --graph --pretty=oneline --abbrev-commit
+
+分支管理策略：
+	通常合并分支时，Git会用Fast forward模式，
+	但这种模式下，删除分支会丢掉分支信息。
+	使用--no-ff方式的git merge,强制禁用了Fast forward模式,
+	Git就会在merge时生成一个新的commit,就可以在分支历史上看出分支信息
+	eg:		git merge --no-ff -m "merge with no-ff" dev
+	首先，master分支非常稳定，通常用于发布新版本
+	开发一般在都dev分支上
+	
+Bug分支：
+	当接到一个bug时，创建一个分支修复它。
+	首先，git stash 	把当前工作存储起来，等恢复现场后再继续工作.
+	接着，git checkout master 
+		  git checkout -b issue-101
+		  假定在master分支上修复bug
+		  git add xxx.txt
+		  git commit -m "fix bug"
+	合并分支
+		  git merge --no-ff -m "merged bug fix" issue-101
+	切回到dev分支继续工作
+		  git checkout dev
+	查看刚才的工作现场存到哪里
+		  git stash list
+	恢复工作
+		  git stash apply
+	删除stash内容
+		  git stash drop
+    恢复并删除
+	      git stash pop
+	可以多次stash，恢复的时候，先用git stash list查看，
+	然后恢复指定的stash
+		git stash apply stash@{0}
+		
+Feature分支
+	添加一个新功能时，不希望一些实验性质的代码把主分支搞乱了，
+	所以每添加一个新功能就新建一个feature分支，
+	开发完成后合并并删除feature分支.
+	当新功能被取消时，删除分支，此时Git会提示我们该分支还未合并，
+	如果删除，将丢失掉修改，如果强行删除，使用 -D 参数
+	eg: git branch -D feature1
+	
+多人协作：
+	查看远程库的信息：	git remote
+			详细信息：  git remote -v
+	推送分支，就是把该分支上的本地提交推送到远程库。
+		git push origin master
+		git push origin dev
+	并不是一定要把本地分支向远处推送：
+		master分支是主分支，因此要时刻与远程同步
+		dev分支时开发分支，团队所有成员都需要在上面工作，也要与远程同步
+		bug分支只用于在本地修复bug,就没必要推送到远程
+		feature是否推送到远程取决于是否与伙伴在上面开发。
+	
+	当从远程库clone时，默认情况下只能看到master分支，
+	要在dev分支上开发，就必须创建origin的dev分支到本地
+		git checkout -b dev origin/dev
+	
+	当origin/dev分支推送的提交冲突了，
+	先用git pull把最新的提交从origin/dev抓下来，然后在本地合并，
+	解决冲突，再推送。这里可能出现git pull失败，原因是没有指定
+	本地dev分支与远程origin/dev分支的链接，设置dev和origin/dev的链接
+		git branch --set-upstream-to=origin/dev dev
+	再pull
+		git pull
+	但是合并有冲突，需要手动解决，解决方法与分支管理一样。
+	
+	工作模式：
+		1、首先，试图用 git push origin <branch-name> 推送自己的修改
+		2、如果推送失败，则因为远程分支比拟的本地更新，需要先用git pull尝试合并
+		3、如果合并用冲突，则解决冲突，并在本地提交
+		4、没有冲突或者解决冲突后，再用git push origin <branch-name> 推送就能成功
+		如果git pull提示no tracking information,则说明本地分支和远程分支没有创建链接
+		使用git branch --set-upstream-to <branch-name> origin/<branch-name> 建立链接
+
+Rebase:
+	git checkout <branch-name>
+	git rebase origin
+	这些命令是把分支<branch-name>里的每个提交取消掉，
+	并且把它们临时保存为补丁，放在(.git/rebase)目录里，
+	然后把分支更新到最新的"origin"分支，最后把保存的补丁应用到分支上。
+	当分支更新之后，它会指向这些新创建的提交，而那些老的提交会被丢弃。
+	在rebase的过程中可能出现冲突，解决完冲突之后git add，
+	无需git commit，只需执行git rebase --continue，git会继续应用剩下的补丁
+	git rebase --abort	//终止rebase的行动，并且<branch-name>回到最初的状态
+
+标签管理：
+	创建标签:	git tag <tagname>
+	指定标签信息：	git tag -a <tagname> -m "xxxxxx"
+	查看标签说明：	git show <tagname>
+	查看所有标签：	git tag
+	推送一个本地标签：	git push origin <tagname>
+	推送全部未推送过的本地标签：	git push origin --tags
+	删除一个本地标签：	git tag -d <tagname>
+	删除一个远程标签：	git push origin :refs/tags/<tagname>
+	
+忽略特殊文件：
+	创建.gitignore文件
+	在.gitignore里面填写要忽略的文件名(例如：jdbc.db)
+	如果添加一个文件添加不了，原因这个文件被.gitignore忽略了
+		git add -f <filename> 	//强制添加到Git
+	或者在.gitignore里面查看那个规则写错了
+		git check-ignore -v <filename>
+	
+	.gitignore文件本身要放在版本库里，
+	并且可以对.gitnore文件进行版本管理.
+	
